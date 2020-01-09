@@ -1,0 +1,18 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define BTN_LEFT 12
+#define BTN_MID 14
+#define BTN_RIGHT 13
+
+#define PIN_SSR 16
+
+#define SENSOR_PIN A0
+#define REFERENCE_RESISTANCE 4700
+#define NOMINAL_RESISTANCE 100000
+#define NOMINAL_TEMPERATURE 25
+#define B_VALUE 4066
+#define READINGS_NUMBER 10
+#define DELAY_TIME 10  // ms
+
+#endif

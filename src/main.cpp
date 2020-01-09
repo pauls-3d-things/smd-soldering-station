@@ -1,18 +1,17 @@
 #include <Arduino.h>
+#include <AverageThermistor.h>
+#include <NTC_Thermistor.h>
+#include <Thermistor.h>
 #include <U8g2lib.h>
 #include <Wire.h>
-#include <thermistor.h>
 
-#define BTN_LEFT 12
-#define BTN_MID 14
-#define BTN_RIGHT 13
+#include "config.h"
 
-THERMISTOR thermistor(A0,
-                      100000,   // Nominal resistance at 25 ºC
-                      4066,    // thermistor's beta coefficient
-                      100000);  // Value of the series resistor
+Thermistor* thermistor = NULL;
 
 U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
+
+boolean ssrOn = false;
 
 void setupButtons() {
   pinMode(BTN_LEFT, INPUT_PULLUP);
@@ -20,22 +19,39 @@ void setupButtons() {
   pinMode(BTN_RIGHT, INPUT_PULLUP);
 }
 
+void setupThermistor() {
+  Thermistor* originThermistor =
+      new NTC_Thermistor(SENSOR_PIN, REFERENCE_RESISTANCE, NOMINAL_RESISTANCE, NOMINAL_TEMPERATURE, B_VALUE);
+  thermistor = new AverageThermistor(originThermistor, READINGS_NUMBER, DELAY_TIME);
+}
+
+void setupSSR() {
+    pinMode(PIN_SSR, OUTPUT);
+}
+
 void setup(void) {
   Wire.begin(5, 4);  // (CLK,SDA)
   u8g2.begin();
   setupButtons();
+
+  setupThermistor();
+  setupSSR();
 }
 
 void loop(void) {
-  uint temp = thermistor.read();
+  digitalWrite(PIN_SSR, ssrOn ? HIGH : LOW);
+
+  float temp = thermistor->readCelsius();
 
   u8g2.clearBuffer();
   u8g2.setFont(u8g2_font_ncenB08_tr);
-  u8g2.drawStr(0, 25, digitalRead(BTN_LEFT) ? "BTN_LEFT: UP" : "BTN_LEFT: DOWN");
-  u8g2.drawStr(0, 35, digitalRead(BTN_MID) ? "BTN_MID: UP" : "BTN_MID: DOWN");
-  u8g2.drawStr(0, 45, digitalRead(BTN_RIGHT) ? "BTN_RIGHT: UP" : "BTN_RIGHT: DOWN");
-  u8g2.drawStr(0, 55, (String("Temp (C): ") + String(temp / 10.0, 1)).c_str());
+  u8g2.drawStr(0, 15, (String("Temp (C): ") + String(temp, 1)).c_str());
+  u8g2.drawStr(0, 25, ssrOn ? "SSR: ON" : "SSR: OFF");
+  u8g2.drawStr(0, 35, (String("A0: ") + String(analogRead(A0))).c_str());
   u8g2.sendBuffer();
 
+  if (digitalRead(BTN_RIGHT) == LOW) {  // LOW = button down
+    ssrOn = !ssrOn;
+  }
   delay(50);
 }
