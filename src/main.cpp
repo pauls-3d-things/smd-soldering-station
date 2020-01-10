@@ -78,7 +78,7 @@ void applyOutput() {
       coolingSince = now;
       lastChange = now;
     }
-  } else if (Output > 0) {
+  } else if (Output > 4) {
     // we are (partially) cooling
     if (now - coolingSince > TEMP_WINDOW * ((255 - Output) / 255.0)) {
       // turn on
